@@ -1,55 +1,53 @@
-import { GoogleGenerativeAI } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 
-// 使用更稳定的模型名称
-const MODEL_NAME = 'gemini-1.5-flash';
+const MODEL_NAME = 'gemini-2.5-flash-image';
 
 export const editImageWithGemini = async (
   base64Image: string,
   prompt: string
 ): Promise<string> => {
-  
-  // 💡 修正 1：改为正确的 Vite 环境变量读取方式
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("API Key 缺失，请在 Vercel 环境变量中设置 VITE_GEMINI_API_KEY");
+  if (!process.env.API_KEY) {
+    throw new Error("API Key is missing in environment variables");
   }
 
-  // 💡 修正 2：改回官方标准的初始化方式
-  const genAI = new GoogleGenerativeAI(apiKey);
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
-  // 清理 Base64 字符串
+  // Clean base64 string if it contains metadata
   const cleanBase64 = base64Image.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
 
   try {
-    const model = genAI.getGenerativeModel({ model: MODEL_NAME });
-
-    // 💡 修正 3：按照 Gemini 1.5 的标准格式发送请求
-    const result = await model.generateContent([
-      {
-        inlineData: {
-          data: cleanBase64,
-          mimeType: "image/jpeg"
-        }
+    const response = await ai.models.generateContent({
+      model: MODEL_NAME,
+      contents: {
+        parts: [
+          {
+            inlineData: {
+              data: cleanBase64,
+              mimeType: 'image/jpeg', // Assuming jpeg for simplicity or detect from input
+            },
+          },
+          {
+            text: prompt,
+          },
+        ],
       },
-      { text: prompt + "。请直接返回修改后的图像数据，不要返回文字说明。" }
-    ]);
+      // Using default config for images. 
+      // Note: responseMimeType is not supported for nano banana series models per guidelines.
+    });
 
-    const response = await result.response;
+    // Check parts for the image
     const parts = response.candidates?.[0]?.content?.parts;
-
     if (!parts) {
-      throw new Error("AI 没有返回任何内容");
+      throw new Error("No content generated");
     }
 
-    // 寻找返回结果中的图片数据
     for (const part of parts) {
       if (part.inlineData && part.inlineData.data) {
         return `data:image/png;base64,${part.inlineData.data}`;
       }
     }
 
-    throw new Error("AI 返回了文字但没有生成图片，请重试");
+    throw new Error("No image generated in response");
 
   } catch (error) {
     console.error("Gemini API Error:", error);

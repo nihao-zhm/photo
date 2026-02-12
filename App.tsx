@@ -11,7 +11,6 @@ const App: React.FC = () => {
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [currentSpec, setCurrentSpec] = useState<IDSpec>(ID_SPECS[0]);
-  const [showPayModal, setShowPayModal] = useState(false); // 控制盈利弹窗
 
   const selectedPhoto = photos.find(p => p.id === selectedId) || null;
 
@@ -48,13 +47,19 @@ const App: React.FC = () => {
   const handleProcessAI = async (prompt: string) => {
     if (!selectedPhoto) return;
 
+    // Set Processing State
     setPhotos(prev => prev.map(p => 
       p.id === selectedPhoto.id ? { ...p, isProcessing: true, error: undefined } : p
     ));
 
     try {
+      // We use the *processedUrl* as source if it exists, allowing iterative edits?
+      // Actually, for simplicity and stability, let's always edit the original or last processed.
+      // To allow "Undo" we might need history, but let's stick to "Original -> Processed".
+      // If user edits again, we use the already processed image as base to keep previous changes?
+      // Yes, otherwise adding a filter then changing background would reset.
+      
       const sourceImage = selectedPhoto.processedUrl || selectedPhoto.originalUrl;
-      // 这里确保 API Key 已连接
       const resultBase64 = await editImageWithGemini(sourceImage, prompt);
 
       setPhotos(prev => prev.map(p => 
@@ -69,31 +74,27 @@ const App: React.FC = () => {
       setPhotos(prev => prev.map(p => 
         p.id === selectedPhoto.id ? { ...p, isProcessing: false, error: "AI Processing Failed" } : p
       ));
-      alert("AI 引擎连接失败，请检查 Vercel 环境变量 VITE_GEMINI_API_KEY");
+      alert("AI Processing Failed. Please check API Key or try again.");
     }
   };
 
-  // 盈利逻辑：点击下载时先弹出收款码
   const handleDownload = async () => {
     if (!selectedPhoto) return;
-    setShowPayModal(true);
-  };
-
-  // 真正的下载执行函数
-  const executeDownload = async () => {
-    const source = selectedPhoto?.processedUrl || selectedPhoto?.originalUrl;
-    if (!source) return;
+    
+    // The final download needs to be the crop of the processed (or original) image
+    const source = selectedPhoto.processedUrl || selectedPhoto.originalUrl;
+    
     try {
       const finalImage = await cropAndResize(source, currentSpec);
-      downloadImage(finalImage, `CFA_ID_${selectedPhoto?.name.replace(/\.[^/.]+$/, "")}.png`);
-      setShowPayModal(false);
+      downloadImage(finalImage, `ID_${currentSpec.id}_${selectedPhoto.name.replace(/\.[^/.]+$/, "")}.png`);
     } catch (e) {
-      alert("生成失败，请重试");
+      alert("Error generating download image");
     }
   };
 
   return (
     <div className="flex h-screen w-full bg-slate-50 text-slate-900">
+      {/* Sidebar */}
       <Sidebar 
         photos={photos}
         selectedId={selectedId}
@@ -102,18 +103,18 @@ const App: React.FC = () => {
         onAddFiles={handleAddFiles}
       />
 
+      {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-14 bg-white border-b border-slate-200 flex items-center px-6 justify-between flex-shrink-0 z-20">
            <div className="flex items-center gap-2">
-             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm">ID</div>
-             <div>
-               <h1 className="font-bold text-base text-slate-800 leading-tight">CFA 考友 AI 证件照</h1>
-               <p className="text-[10px] text-slate-400">已自动适配 600x600 像素标准</p>
+             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm">
+               ID
              </div>
+             <h1 className="font-bold text-lg text-slate-800 tracking-tight">Pro Studio <span className="text-blue-600">AI</span></h1>
            </div>
            
-           <div className="text-[10px] text-slate-500 font-medium bg-green-50 px-2 py-1 rounded border border-green-200">
-              API 状态: {import.meta.env.VITE_GEMINI_API_KEY ? '已连接' : '未连接'}
+           <div className="text-xs text-slate-500 font-medium bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+              API Key: {process.env.API_KEY ? 'Connected' : 'Missing'}
            </div>
         </header>
 
@@ -133,27 +134,6 @@ const App: React.FC = () => {
           />
         </div>
       </div>
-
-      {/* 💰 盈利弹窗模块 */}
-      {showPayModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[999] p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl scale-100 animate-in fade-in zoom-in duration-300">
-            <h3 className="text-lg font-bold text-slate-800">✨ 导出高清报名照</h3>
-            <p className="text-sm text-slate-500 mt-2">支持 AI 算力支出，请我喝杯咖啡吧</p>
-            
-            {/* 请确保根目录有 pay-code.jpg */}
-            <img src="/pay-code.jpg" className="w-48 h-48 mx-auto my-4 border-4 border-blue-50 rounded-xl shadow-inner" alt="收款码" />
-            
-            <div className="flex gap-3">
-              <button onClick={() => setShowPayModal(false)} className="flex-1 py-2.5 text-slate-400 text-sm font-medium">以后再说</button>
-              <button onClick={executeDownload} className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold transition-all">
-                已支付，立即下载
-              </button>
-            </div>
-            <p className="text-[10px] text-slate-400 mt-4 italic">CFA 考生互助，感谢你的支持！</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
