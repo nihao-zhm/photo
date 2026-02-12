@@ -1,0 +1,5 @@
+{
+  "name": "ID Photo Pro AI",
+  "description": "Professional ID photo processing tool powered by Gemini 2.5 Flash Image. Auto-crop, background replacement, and smart retouching.",
+  "requestFramePermissions": []
+}
