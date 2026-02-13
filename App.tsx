@@ -47,18 +47,11 @@ const App: React.FC = () => {
   const handleProcessAI = async (prompt: string) => {
     if (!selectedPhoto) return;
 
-    // Set Processing State
     setPhotos(prev => prev.map(p => 
       p.id === selectedPhoto.id ? { ...p, isProcessing: true, error: undefined } : p
     ));
 
     try {
-      // We use the *processedUrl* as source if it exists, allowing iterative edits?
-      // Actually, for simplicity and stability, let's always edit the original or last processed.
-      // To allow "Undo" we might need history, but let's stick to "Original -> Processed".
-      // If user edits again, we use the already processed image as base to keep previous changes?
-      // Yes, otherwise adding a filter then changing background would reset.
-      
       const sourceImage = selectedPhoto.processedUrl || selectedPhoto.originalUrl;
       const resultBase64 = await editImageWithGemini(sourceImage, prompt);
 
@@ -72,29 +65,25 @@ const App: React.FC = () => {
     } catch (error) {
       console.error(error);
       setPhotos(prev => prev.map(p => 
-        p.id === selectedPhoto.id ? { ...p, isProcessing: false, error: "AI Processing Failed" } : p
+        p.id === selectedPhoto.id ? { ...p, isProcessing: false, error: "AI 处理失败" } : p
       ));
-      alert("AI Processing Failed. Please check API Key or try again.");
+      alert("AI 处理失败，请检查阿里云 API Key 或网络环境。");
     }
   };
 
   const handleDownload = async () => {
     if (!selectedPhoto) return;
-    
-    // The final download needs to be the crop of the processed (or original) image
     const source = selectedPhoto.processedUrl || selectedPhoto.originalUrl;
-    
     try {
       const finalImage = await cropAndResize(source, currentSpec);
       downloadImage(finalImage, `ID_${currentSpec.id}_${selectedPhoto.name.replace(/\.[^/.]+$/, "")}.png`);
     } catch (e) {
-      alert("Error generating download image");
+      alert("导出图片出错");
     }
   };
 
   return (
     <div className="flex h-screen w-full bg-slate-50 text-slate-900">
-      {/* Sidebar */}
       <Sidebar 
         photos={photos}
         selectedId={selectedId}
@@ -102,19 +91,17 @@ const App: React.FC = () => {
         onRemove={handleRemovePhoto}
         onAddFiles={handleAddFiles}
       />
-
-      {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-14 bg-white border-b border-slate-200 flex items-center px-6 justify-between flex-shrink-0 z-20">
            <div className="flex items-center gap-2">
              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm">
                ID
              </div>
-             <h1 className="font-bold text-lg text-slate-800 tracking-tight">Pro Studio <span className="text-blue-600">AI</span></h1>
+             <h1 className="font-bold text-lg text-slate-800 tracking-tight">智能证件照 <span className="text-blue-600">AI</span></h1>
            </div>
            
            <div className="text-xs text-slate-500 font-medium bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
-              API Key: {process.env.API_KEY ? 'Connected' : 'Missing'}
+              阿里云状态: {process.env.ALIYUN_API_KEY ? '已连接' : '未配置'}
            </div>
         </header>
 
