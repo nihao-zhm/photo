@@ -4,13 +4,13 @@
     "module": "ESNext",
     "moduleResolution": "node",
     "outDir": "./dist",
-    "rootDir": "./api",
+    "rootDir": ".",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true
   },
-  "include": ["api/**/*.ts"],
+  "include": ["api/**/*.ts", "shared/**/*.ts"],
   "exclude": ["node_modules"]
 }
