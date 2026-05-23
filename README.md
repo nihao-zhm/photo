@@ -1,20 +1,113 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# 电商价格对比工具
 
-# Run and deploy your AI Studio app
+一个功能强大的电商商品价格自动化采集与对比工具。
 
-This contains everything you need to run your app locally.
+## 功能特性
 
-View your app in AI Studio: https://ai.studio/apps/drive/17zMIdp1YnuoSAdiJ5ZJBPGxTSuDvYy7r
+- 🔍 **多平台搜索**：支持京东、淘宝、拼多多等主流电商平台
+- 💾 **数据清洗**：自动去重和数据标准化
+- 📊 **价格分析**：价格分布、平台占比等可视化图表
+- ⚖️ **智能排序**：支持按价格、销量、评分排序
+- 📦 **商品对比**：多商品横向对比，性价比推荐
+- 🖥️ **命令行工具**：支持 CLI 方式使用
+- 🌐 **Web 界面**：美观的用户界面
 
-## Run Locally
+## 技术栈
 
-**Prerequisites:**  Node.js
+- **前端**：React 18 + TypeScript + Tailwind CSS + Chart.js
+- **后端**：Express.js + TypeScript
+- **状态管理**：Zustand
+- **打包工具**：Vite
 
+## 快速开始
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### 安装依赖
+
+```bash
+npm install
+```
+
+### 开发模式
+
+启动后端服务（端口 3001）：
+```bash
+npm run dev:server
+```
+
+启动前端开发服务器（端口 3000）：
+```bash
+npm run dev:client
+```
+
+或者同时启动前后端：
+```bash
+npm run dev
+```
+
+### 命令行使用
+
+查看示例数据：
+```bash
+npm run cli sample
+```
+
+搜索商品：
+```bash
+npm run cli search "iPhone 15"
+```
+
+指定平台：
+```bash
+npm run cli search "iPhone 15" -- --platforms jd taobao
+```
+
+### 构建
+
+```bash
+npm run build
+```
+
+## 项目结构
+
+```
+├── src/              # 前端源代码
+│   ├── components/   # 组件
+│   ├── pages/        # 页面
+│   ├── hooks/        # 自定义 Hooks
+│   └── utils/        # 工具函数
+├── api/              # 后端 API
+├── cli/              # 命令行工具
+├── shared/           # 共享类型定义
+└── ...
+```
+
+## 主要功能说明
+
+### 1. 搜索与采集
+- 输入关键词进行多平台搜索
+- 选择需要采集的电商平台
+- 实时显示搜索进度
+
+### 2. 数据展示
+- 商品卡片式展示
+- 价格、销量、评分一目了然
+- 平台标识清晰可见
+
+### 3. 价格分析
+- 价格分布柱状图
+- 平台占比饼图
+- 价格统计（最低、最高、平均）
+
+### 4. 商品对比
+- 选择多个商品进行横向对比
+- 性价比智能分析
+- 高亮推荐最佳选择
+
+## 性价比算法
+
+性价比综合考虑以下因素：
+- 价格权重：40%
+- 销量权重：30%
+- 评分权重：30%
+
+通过标准化计算得出综合得分。
